@@ -6,8 +6,8 @@ https://eugeneyan.com/writing/product-evals/
 
 Setup:
 - Ground truth: GPT-5.1 labels in data/questions_version_2.csv (simulating human labels)
-- Evaluator: GPT-5-mini (smaller, cheaper model)
-- Goal: Measure how well gpt-5-mini can replicate GPT-5.1's labeling decisions
+- Evaluator: Configurable model (default: gpt-5-mini)
+- Goal: Measure how well smaller models can replicate GPT-5.1's labeling decisions
 
 Key Metrics (from Eugene Yan):
 - Cohen's Kappa: 0.4-0.6 = substantial agreement, >0.7 = excellent
@@ -15,7 +15,11 @@ Key Metrics (from Eugene Yan):
 - Human inter-rater reliability is often only 0.2-0.3
 
 Usage:
-    uv run verify_evaluator.py [--sample N] [--train-test]
+    uv run verify_evaluator.py [--sample N] [--train-test] [--model MODEL]
+
+Examples:
+    uv run verify_evaluator.py --sample 50 --model gpt-5-mini-2025-08-07
+    uv run verify_evaluator.py --sample 50 --model gpt-5-nano-2025-08-07
 """
 
 import os
@@ -30,8 +34,8 @@ from openai import OpenAI
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Smaller model as evaluator (we're testing if it can match GPT-5.1 labels)
-EVALUATOR_MODEL = "gpt-5-mini-2025-08-07"
+# Default evaluator model (can be overridden with --model flag)
+DEFAULT_MODEL = "gpt-5-mini-2025-08-07"
 DATA_FILE = "data/questions_version_2.csv"
 
 # Function calling tool for reliable structured output
@@ -66,9 +70,9 @@ def load_dataset(filepath: str) -> list[dict]:
         return [row for row in reader if row.get("label")]  # Only rows with labels
 
 
-def evaluate_response(question: str, response: str, retries: int = 3) -> tuple[str, str]:
+def evaluate_response(question: str, response: str, model: str, retries: int = 3) -> tuple[str, str]:
     """
-    Evaluate a question/response pair using the evaluator model.
+    Evaluate a question/response pair using the specified model.
     Returns (verdict, reasoning).
     """
     prompt = f"""You are evaluating whether an AI response correctly and helpfully answers a question.
@@ -89,7 +93,7 @@ Use the submit_evaluation tool to provide your verdict:
     for attempt in range(retries):
         try:
             result = client.responses.create(
-                model=EVALUATOR_MODEL,
+                model=model,
                 input=[{"role": "user", "content": prompt}],
                 tools=[EVAL_TOOL],
                 tool_choice={"type": "function", "name": "submit_evaluation"},
@@ -194,12 +198,14 @@ def main():
     parser.add_argument("--sample", type=int, help="Evaluate only N random samples")
     parser.add_argument("--train-test", action="store_true", help="Use 75/25 train/test split")
     parser.add_argument("--category", type=str, help="Filter by category")
+    parser.add_argument("--model", type=str, default=DEFAULT_MODEL,
+                        help=f"Model to use as evaluator (default: {DEFAULT_MODEL})")
     args = parser.parse_args()
 
     print("=" * 70)
     print("LLM Evaluator Verification")
     print("=" * 70)
-    print(f"\nEvaluator Model: {EVALUATOR_MODEL}")
+    print(f"\nEvaluator Model: {args.model}")
     print(f"Ground Truth: GPT-5.1 labels from {DATA_FILE}")
     print(f"Methodology: Eugene Yan's Product Evals")
     print()
@@ -241,7 +247,7 @@ def main():
     disagreements = []
 
     for i, row in enumerate(data, 1):
-        pred, reasoning = evaluate_response(row["question"], row["response"])
+        pred, reasoning = evaluate_response(row["question"], row["response"], args.model)
 
         match = pred == row["label"]
         results.append({
