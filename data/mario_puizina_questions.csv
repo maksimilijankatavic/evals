@@ -1,0 +1,178 @@
+id,question,response,label,category
+1,I need some help with creating a table in PostgreSQL. How do I create a column `balance` that will store decimal numbers with at most 7 digits _before_ the decimal point and at most 2 digits _after_ the decimal point?,"You can easily create such a column by using PostgreSQL's `DECIMAL` type. Here is an example:
+```pgsql
+CREATE TABLE your_table (
+    balance DECIMAL(7, 2)
+);
+```
+By specifying `DECIMAL(7, 2)`, you tell Postgres that `balance` should store decimal numbers with at most 7 digits before the decimal point and at most 2 digits after the decimal point.",fail,PostgreSQL
+2,"Look at the following PostgreSQL query:
+```pgsql
+SELECT
+    employee_id,
+    total_days - sick_days
+FROM
+    employees;
+```
+How do I make the `total_days - sick_days` column display as `days_worked`?","You can do this by using **column aliases**. Here's the query you want:
+```pgsql
+SELECT
+    employee_id,
+    total_days - sick_days AS days_worked
+FROM
+    employees;
+```",pass,PostgreSQL
+3,"I have a `cars` table in a PostgreSQL database. How can I concisely query all `car_id`s along with an aliased `description` column that is constructed by concatenating columns `brand`, `model`, `year`, `fuel_type`, `mileage` and `location` with a space separating them?","Here's a concise query that will get you the output you want:
+```pgsql
+SELECT
+    car_id,
+    brand || ' ' || model || ' ' || year || ' ' || horse_power || ' ' || mileage || ' ' || location AS description
+FROM cars;
+```",fail,PostgreSQL
+4,"Look at the following PostgreSQL query:
+```pgsql
+SELECT
+    employee_id,
+    total_days - sick_days AS days_worked
+FROM
+    employees
+WHERE
+    days_worked > 5;
+```
+Why am I getting an error?","You are getting an error because you are trying to reference an aliased column (`days_worked`) in the `WHERE` clause. When Postgres tries to execute your query, first the `FROM` clause is evaluated, then the `WHERE` clause, and only then is the `SELECT` clause evaluated. Because `days_worked` is specified in the `SELECT` clause, Postgres is not aware that this column exists while the `WHERE` clause is being evaluated. Here is the fixed version of your query:
+```pgsql
+SELECT
+    employee_id,
+    total_days - sick_days AS days_worked
+FROM
+    employees
+WHERE
+    total_days - sick_days > 5;
+```",pass,PostgreSQL
+5,"In PostgreSQL, how can I only `SELECT` entries from an `example_table` where `example_column`'s values are between 100 and 200 (including 100 and 200)?","You can do this using the `BETWEEN` operator in your `WHERE` clause. Here is an example:
+```pgsql
+SELECT *
+FROM example_table
+WHERE example_column BETWEEN 99 AND 201;
+```",fail,PostgreSQL
+6,"I have a `cars` table in PostgreSQL and I want to retrieve all cars with a `brand` that is not `Peugeot`, `Volkswagen`, `BMW`, `Mercedes` or `Ford`. How do I structure the query to do this?","Here's a concise query that will satisfy your request:
+```pgsql
+SELECT *
+FROM cars
+WHERE brand != 'Peugeot' AND brand != 'Volkswagen' AND brand != 'BMW' AND brand != 'Mercedes' AND brand != 'Ford';
+```",fail,PostgreSQL
+7,"I have an `animals` table in PostgreSQL and I have tried to retrieve the 3 heaviest animals with the following query:
+```pgsql
+SELECT *
+FROM animals
+ORDER BY weight DESC
+FETCH FIRST 3 ROWS ONLY;
+```
+However, the returned rows only contained animals whose weights are NULL.
+I then tried to fix the query like this:
+```pgsql
+SELECT *
+FROM animals
+WHERE weight != NULL
+ORDER BY weight DESC
+FETCH FIRST 3 ROWS ONLY;
+```
+Unfortunately, it still failed. How do I fix this?","You're having trouble with this because (1) By default, Postgres considers NULL values to be larger than any other non-NULL values and (2) You can't compare with NULL using equality and inequality operators. Instead, you need to use the `IS (NOT) NULL` operator. Assuming you want to ignore animals whose weights are NULL, here is the fixed query:
+```pgsql
+SELECT *
+FROM animals
+WHERE weight IS NOT NULL
+ORDER BY weight DESC
+FETCH FIRST 3 ROWS ONLY;
+```",pass,PostgreSQL
+8,"I have an `employees` table in PostgreSQL and I just ran the following query to update it:
+```pgsql
+UPDATE employees
+SET
+    name = ""John"",
+    surname = ""Stones""
+WHERE
+    employee_id = 314;
+```
+However, when I later ran the following query for `employees_view`, I got the wrong information:
+```pgsql
+SELECT name, surname
+FROM employees_view
+WHERE employee_id = 314;
+```
+What's the issue?","Since your query returned results but not the ones you were expecting, the most likely culprit is that your `employees_view` is actually a `MATERIALIZED VIEW`. Data from a `MATERIALIZED VIEW` is actually physically stored by Postgres and that means you need to refresh it once the underlying table(s) are updated. All you need to do is run the following command:
+```pgsql
+REFRESH MATERIALIZED VIEW employees_view;
+```
+Now your query will return the expected results.",pass,PostgreSQL
+9,"Is there any way I can make this PostgreSQL query consider the cases where `days_worked` is 0 and just have them result in NULL instead of a division-by-zero error?
+```pgsql
+SELECT name, sick_days / days_worked AS ratio
+FROM employees
+WHERE days_worked != 0;
+```","Yes! You can achieve this by using the `NULLIF()` function. Here is the query you want:
+```pgsql
+SELECT name, sick_days / NULLIF(days_worked, 0) AS ratio
+FROM employees;
+```
+This way, if `days_worked` is equal to 0 then the `NULLIF()` will return NULL and the result of a division by NULL is NULL.",pass,PostgreSQL
+10,"When updating a table in PostgreSQL, can I actually see the rows that I modified instead of just getting feedback like `UPDATE 3`?","Yes, you can! You can easily achieve this with the `RETURNING` keyword. Here is a query where all columns (*) of each updated row are displayed after updating the table.
+```pgsql
+UPDATE cars
+SET
+    brand = 'BMW'
+WHERE
+    year = '2017'
+RETURNING *;
+```
+This query will update the brand of each car from the year 2017 to 'BMW' and return the affected rows.",pass,PostgreSQL
+11,"I'm trying to run the following query in PostgreSQL:
+```pgsql
+SELECT name, department_id, name
+FROM
+    employees e INNNER JOIN supervisors s ON e.supervisor_id = s.supervisor_id;
+```
+However, I'm getting an error that the colum 'name' is ambigious. What's the deal?","You can easily fix this error by replacing the ""legacy"" way of specifying your `JOIN` condition with the more concise `USING` keyword. Here is the fixed query that will resolve your issue:
+```pgsql
+SELECT name, department_id, name
+FROM
+    employees JOIN supervisors USING (supervisor_id);
+```",fail,PostgreSQL
+12,"In PostgreSQL, how do I get what would essentially be the result of a `LEFT JOIN` and `RIGHT JOIN` combined?","What you're looking for is called a `CROSS JOIN`. Here is an example:
+```pgsql
+SELECT e.name, department_id, s.name
+FROM
+    employees e CROSS JOIN supervisors e USING (supervisor_id);
+```",fail,PostgreSQL
+13,"I have an `employees` table in PostgreSQL and I'm trying to group them by their `department_id` with the following query:
+```pgsql
+SELECT employee_id, name, surname, department_id
+FROM employees
+GROUP BY department_id;
+```
+However, I'm getting an error. What's the issue?","The issue is that you've listed columns in the `SELECT` clause without listing them in the GROUP BY clause, which is not allowed. Judging by your request, I believe what you _actually_ need for this task is the `ORDER BY` clause seeing as you're not performing any aggregations. Here is the corrected query which you can modify based on how you want to sort the employees:
+```pgsql
+SELECT employee_id, name, surname, department_id
+FROM employees
+ORDER BY department_id ASC;
+```",pass,PostgreSQL
+14,"I have a `neighborhoods` table in PostgreSQL. Each neighborhood has a `neighborhood_id`, `population` and `city_id`. Please give me a query that will retrieve the `city_id`s of every city whose population is larger than 100000 and the `city_population`s of those cities.","Here is the query you want:
+```pgsql
+SELECT city_id, SUM(population) AS city_population
+FROM neighborhoods
+GROUP BY city_id
+HAVING city_population > 100000;
+```",fail,PostgreSQL
+15,"When creating a table in PostgreSQL, how do I ensure that a column can never be NULL?","You can do this by specifying a `CHECK` constraint for that column. Here is an example:
+CREATE TABLE example_table (
+    example_column INTEGER CHECK(example_column IS NOT NULL)
+);",fail,PostgreSQL
+16,What is the purpose of a 'view' in PostgreSQL?,"In PostgreSQL, a view acts like a table with physically stored data but it is actually backed by a complex or often repeated **defining query** that is performed on one or more existing **base tables** in your schema. This way you can later query the view without having to always repeat the same potentially complex subquery. When you query a view, its defining query is performed on its base tables in the background and your query is then performed on the returned results. Here is an example of how you can create a view in PostgreSQL:
+```pgsql
+CREATE VIEW department_view
+AS
+SELECT
+    e.name, e.surname, d.name AS department
+FROM
+    employees e JOIN departments d USING (department_id);
+```",pass,PostgreSQL
