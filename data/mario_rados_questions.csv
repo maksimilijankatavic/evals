@@ -1,0 +1,21 @@
+question,answer,ground_truth,explanation
+What is supervised learning,Training a model using labeled data,pass,Correct definition of supervised learning
+What is a neural network,A collection of spreadsheet rules,fail,Incorrect description of neural networks
+What is a feature in machine learning,An input variable used by the model,pass,Correct definition of a feature
+What is a label,The number of layers in a neural network,fail,"Labels represent targets, not architecture"
+What is overfitting,When a model performs extremely well on training data but poorly on new data,pass,Correct definition of overfitting
+What is underfitting,When a model memorizes the training set perfectly,fail,Underfitting means the model learns too little
+What is gradient descent,An optimization algorithm that updates parameters to minimize loss,pass,Correct explanation of gradient descent
+What is a decision tree,A tool used to store website passwords,fail,"Decision trees are ML models, not password managers"
+What is a dataset,A collection of samples used for training and evaluation,pass,Correct definition of a dataset
+What is model evaluation,The process of drawing charts in PowerPoint,fail,"Model evaluation measures performance, not presentation"
+What is a confusion matrix,A table showing true and false predictions for classification,pass,Correct definition of a confusion matrix
+What is a hyperparameter,The output of a trained model,fail,"Hyperparameters configure training, not predictions"
+What is regularization,A technique used to reduce overfitting,pass,Correct explanation of regularization
+What is a training set,Data used only after the model is deployed,fail,Training sets are used before deployment
+What is a test set,Data used to measure model performance on unseen samples,pass,Correct definition of a test set
+What is cross validation,A method for storing backups of ML models,fail,Cross-validation evaluates model stability
+What is a classifier,An algorithm that assigns labels to data,pass,Correct definition of a classifier
+What is clustering,A supervised learning technique,fail,Clustering is unsupervised
+What is a loss function,A function that measures prediction error,pass,Correct definition of a loss function
+What is model inference,The process of collecting raw data,fail,Inference means generating predictions
