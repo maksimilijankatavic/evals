@@ -14,3 +14,6 @@ __pycache__/
 
 # Results (regeneratable)
 results/
+
+# Slidegauge cache
+.slidegauge.cache.json
